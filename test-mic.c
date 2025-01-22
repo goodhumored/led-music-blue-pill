@@ -2,7 +2,6 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/timer.h>
-#include <libopencm3/stm32/afio.h>
 #include <stdint.h>
 
 #define PWM_PIN GPIO8 // PA8 для ШИМ
