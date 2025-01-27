@@ -8,30 +8,30 @@
 #define ADC_PIN GPIO0 // PA0 для ADC (микрофон)
 
 void wait(int time) {
-  for (time = 0; time < 800000; time++) __asm__("nop");
+  for (int i = 0; i < 3600 * time; i++) __asm__("nop");
 }
 
 void gpio_setup(void) {
   rcc_periph_clock_enable(RCC_GPIOA);
-  rcc_periph_clock_enable(RCC_AFIO);
 
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, PWM_PIN);
   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, ADC_PIN);
 }
 
 void adc_setup(void) {
-  rcc_periph_clock_enable(RCC_ADC1);
-
-  adc_power_on(ADC1);
-  adc_set_regular_sequence(ADC1, 1, (uint8_t[]){0});
-  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_55DOT5CYC);
-  adc_power_on(ADC1);
+  rcc_periph_clock_enable(RCC_ADC1); // Включаем тактирование ADC1
+  adc_power_off(ADC1);               // Выключаем ADC перед настройкой
+  adc_set_sample_time(ADC1, 0, ADC_SMPR_SMP_239DOT5CYC); // Время выборки
+  adc_set_continuous_conversion_mode(ADC1);
+  adc_set_regular_sequence(ADC1, 1, (uint8_t[]){0}); // Канал 0
+  adc_power_on(ADC1);                                // Включаем ADC
+  wait(1000); // Задержка для стабилизации ADC
 }
 
 uint16_t read_adc(void) {
-  adc_start_conversion_regular(ADC1);
-  while (!(ADC1_SR & ADC_SR_EOC)) {}
-  return adc_read_regular(ADC1);
+    while (!adc_eoc(ADC1)) {
+    } // Ожидание завершения преобразования
+    return adc_read_regular(ADC1);          // Чтение результата
 }
 
 void pwm_setup(void) {
@@ -46,6 +46,27 @@ void pwm_setup(void) {
   timer_enable_counter(TIM1);
 }
 
+uint16_t get_amplitude(void) {
+  uint16_t adc_value;
+  uint16_t max_value = 0;
+  uint16_t min_value = 4095;
+
+  // Считываем несколько значений ADC для получения амплитуды
+  for (int i = 0; i < 100; i++) { // 100 выборок для точности
+    adc_value = read_adc();
+    if (adc_value > max_value) {
+      max_value = adc_value;
+    }
+    if (adc_value < min_value) {
+      min_value = adc_value;
+    }
+    wait(5); // 100 = 1 second (на всё (0.1сек итерация)) in debug, 3x times slower (3.3 (0.33сек?)) in prod
+  }
+
+  // Вычисляем амплитуду как разницу между максимальным и минимальным значением
+  return max_value - min_value;
+}
+
 int main(void) {
   gpio_setup();
   adc_setup();
@@ -53,12 +74,21 @@ int main(void) {
 
   uint16_t adc_value;
   uint32_t pwm_duty_cycle;
+  uint16_t amplitude;
+  uint32_t i = 0;
 
+  adc_start_conversion_regular(ADC1); // Запуск преобразования
   while (1) {
-    adc_value = read_adc();
-    pwm_duty_cycle = (adc_value * 1000) / 4095;
+    amplitude = get_amplitude();  // Получаем амплитуду
+    /*while (!adc_eoc(ADC1)) {*/
+    /*} // Ожидание завершения преобразования*/
+    /*amplitude = adc_read_regular(ADC1);          // Чтение результата*/
+    // Преобразуем амплитуду в диапазон от 0 до 1000 для ШИМ
+    pwm_duty_cycle = (amplitude * 1000) / 4095;
+    i = (i + 25) % 1001;
+    /*pwm_duty_cycle = i;*/
     timer_set_oc_value(TIM1, TIM_OC1, pwm_duty_cycle);
-    wait(1000);
+    wait(50); // 100 = 1 second (на всё (0.1сек итерация)) in debug, 3x times slower (3.3 (0.33сек?)) in prod
   }
 
   return 0;
