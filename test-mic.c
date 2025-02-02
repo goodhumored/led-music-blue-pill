@@ -13,7 +13,7 @@
 #define BLUE_OC TIM_OC4
 
 // Максимальные значения для цветов 0-1
-#define RED_MAX 0.5
+#define RED_MAX 0.7
 #define GREEN_MAX 0.7
 #define BLUE_MAX 0.9
 
@@ -73,7 +73,7 @@ uint16_t get_amplitude(void) {
   uint16_t min_value = 4095;
 
   // Считываем несколько значений ADC для получения амплитуды
-  for (int i = 0; i < 1000; i++) { // 100 выборок для точности
+  for (int i = 0; i < 500; i++) { // 100 выборок для точности
     adc_value = read_adc();
     if (adc_value > max_value) {
       max_value = adc_value;
