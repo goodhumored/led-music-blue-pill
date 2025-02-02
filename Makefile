@@ -155,13 +155,13 @@ endif
 ###############################################################################
 # Used libraries
 
-LDLIBS		+= -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
+LDLIBS		+= -Wl,--start-group -lc -lgcc -lnosys -lm -Wl,--end-group
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 
-.SUFFIXES: .elf .bin .hex .srec .list .map .images
+.SUFFIXES: .elf .bin .hex .srec .list .map .image-static
 .SECONDEXPANSION:
 .SECONDARY:
 
@@ -173,7 +173,7 @@ ${BUILD_DIR}:
 elf: $(BINARY).elf
 bin: $(BINARY).bin
 watch:
-	@find $(SRC_DIR) -type f -name "*.c" | entr -r $(MAKE) flash
+	@find src -type f \( -name "*.c" -o -name "*.h" \) | entr -r $(MAKE) flash
 flash: $(BINARY).stlink-flash
 erase: 
 	$(call header,ERASING FLASH)
@@ -216,8 +216,7 @@ ${BUILD_DIR}/%.elf: $(OBJS) $(LDSCRIPT) $(OPENCM3_DIR)/lib/lib$(LIBNAME).a
 	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o ${BUILD_DIR}/$(*).elf
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@) $(DEP_DIR)
-	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
+	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@  -c $<
 
 stylecheck: $(STYLECHECKFILES:=.stylecheck)
 styleclean: $(STYLECHECKFILES:=.styleclean)
