@@ -113,10 +113,10 @@ int main(void) {
   adc_setup();
   pwm_setup();
 
-  uint16_t adc_value;
-  uint32_t pwm_duty_cycle;
+  /*uint16_t adc_value;*/
+  /*uint32_t pwm_duty_cycle;*/
   uint16_t amplitude;
-  uint32_t i = 0;
+  /*uint32_t i = 0;*/
   /*bool up = true;*/
 
   adc_start_conversion_regular(ADC1); // Запуск преобразования

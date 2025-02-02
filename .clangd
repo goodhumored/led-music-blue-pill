@@ -1,4 +1,4 @@
 CompileFlags:
   Add:
-    - -I/home/goodhumored/Uni/7sem/microcontrollers/stm32-playground/libopencm3-examples/libopencm3/include/
+    - -I/home/goodhumored/Uni/7sem/microcontrollers/stm32-playground/stm32f103c8t6/test-mic/lib/libopencm3/include/
     - -DSTM32F1
