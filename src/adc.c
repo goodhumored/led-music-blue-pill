@@ -1,3 +1,4 @@
+#include "adc.h"
 #include "pin-mapping.h"
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/rcc.h>
