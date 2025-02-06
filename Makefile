@@ -10,7 +10,7 @@ OPENCM3_DIR := $(wildcard $(LIBPATHS:=/locm3.sublime-project))
 OPENCM3_DIR := $(firstword $(dir $(OPENCM3_DIR)))
 
 CC = arm-none-eabi-gcc
-CFLAGS = -Wall -Wextra -O2 -DSTM32F1
+CFLAGS = -Wall -Wextra -O3 -DSTM32F1
 LDFLAGS = -Llib/libopencm3/lib -lopencm3_stm32f1
 LIBNAME		= opencm3_stm32f1
 DEFS		+= -DSTM32F1
@@ -152,6 +152,22 @@ ifeq ($(V),99)
 TGT_LDFLAGS		+= -Wl,--print-gc-sections
 endif
 
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                         kissfft                          │
+#          ╰──────────────────────────────────────────────────────────╯
+
+KISSFFT_DIR = lib/kissfft
+TGT_CPPFLAGS += -I$(KISSFFT_DIR)
+KISSFFT_SRC := $(KISSFFT_DIR)/kiss_fft.c $(KISSFFT_DIR)/kiss_fftr.c
+SRC_FILES += $(KISSFFT_SRC)
+
+KISSFFT_OBJS := $(patsubst $(KISSFFT_DIR)/%.c, $(OBJ_DIR)/%.o, $(KISSFFT_SRC))
+OBJS += $(KISSFFT_OBJS)
+
+DEFS += -DFIXED_POINT=16
+DEFS += -DKISSFFT_DATATYPE=int16_t
+DEFS += -DKISSFFT_TEST=OFF
+
 ###############################################################################
 # Used libraries
 
@@ -199,6 +215,10 @@ ifeq (,$(wildcard $@))
 	$(warning $(LIBNAME).a not found, attempting to rebuild in $(OPENCM3_DIR))
 	$(MAKE) -C $(OPENCM3_DIR)
 endif
+
+$(OBJ_DIR)/%.o: $(KISSFFT_DIR)/%.c
+	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
+
 
 # Define a helper macro for debugging make errors online
 # you can type "make print-OPENCM3_DIR" and it will show you
@@ -263,6 +283,6 @@ else
 		   $(*).elf
 endif
 
-.PHONY: images clean stylecheck styleclean elf bin hex srec list
+.PHONY: images clean stylecheck styleclean elf bin hex srec list ${BUILD_DIR}
 
 -include $(OBJS:.o=.d)

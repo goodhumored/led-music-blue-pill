@@ -1,4 +1,9 @@
 CompileFlags:
   Add:
     - -I/home/goodhumored/Uni/7sem/microcontrollers/stm32-playground/stm32f103c8t6/test-mic/lib/libopencm3/include/
+    - -I/home/goodhumored/Uni/7sem/microcontrollers/stm32-playground/stm32f103c8t6/test-mic/lib/kissfft
     - -DSTM32F1
+    - -DFIXED_POINT=16
+    - -DKISSFFT_DATATYPE=int16_t
+    - -DKISSFFT_TEST=OFF
+
