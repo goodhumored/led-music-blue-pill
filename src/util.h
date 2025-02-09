@@ -6,6 +6,7 @@
  * Функция для ожидания определённого числа тиков
  * 1000 =~ 1 секунде
  */
-void wait(int time);
+#include <stdint.h>
+void wait(uint32_t time);
 
 #endif

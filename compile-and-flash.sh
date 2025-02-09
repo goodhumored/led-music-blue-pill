@@ -1,1 +1,1 @@
-make clean all && make test-mic.stlink-flash
+make clean all && make flash

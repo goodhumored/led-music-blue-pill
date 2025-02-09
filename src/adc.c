@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define MAX_ADC_VALUE 4095 // 12 бит АЦП макс значение 4095 (2**12)
+#define ADC_PRESCALE 
 
 void init_adc(void) {
   rcc_periph_clock_enable(MIC_RCC); // Включаем тактирование ADC1
@@ -19,8 +20,7 @@ void start_conversion(void) {
   adc_start_conversion_regular(MIC_ADC); // Запуск преобразования
 }
 
-double read_adc(void) {
+uint16_t read_adc(void) {
   while (!adc_eoc(MIC_ADC)) {}
-  uint32_t value = adc_read_regular(MIC_ADC);
-  return (double)value / MAX_ADC_VALUE;
+  return adc_read_regular(MIC_ADC);
 }

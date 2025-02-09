@@ -1,6 +1,9 @@
+#include "util.h"
+#include <stdint.h>
 #define MS_TICKS 3600
 
-void wait(int time) {
-  for (int i = 0; i < MS_TICKS * time; i++) __asm__("nop");
+void wait(uint32_t time) {
+  uint32_t stop = MS_TICKS * time;
+  for (uint32_t i = 0; i < stop; i++) __asm__("nop");
 }
 

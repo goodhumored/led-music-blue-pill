@@ -10,7 +10,7 @@ OPENCM3_DIR := $(wildcard $(LIBPATHS:=/locm3.sublime-project))
 OPENCM3_DIR := $(firstword $(dir $(OPENCM3_DIR)))
 
 CC = arm-none-eabi-gcc
-CFLAGS = -Wall -Wextra -O3 -DSTM32F1
+CFLAGS = -Wall -Wextra -DSTM32F1
 LDFLAGS = -Llib/libopencm3/lib -lopencm3_stm32f1
 LIBNAME		= opencm3_stm32f1
 DEFS		+= -DSTM32F1
