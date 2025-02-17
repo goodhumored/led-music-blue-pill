@@ -13,5 +13,5 @@ void start_conversion(void);
  * Функция получения очередного значения АЦП
  * @returns значение полученное с АЦП в диапазоне от 0-1
  */
-uint16_t read_adc(void);
+uint32_t read_adc(void);
 #endif

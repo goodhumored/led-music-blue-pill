@@ -8,7 +8,7 @@
 /*#define RED_MULTIPLIER 0.7*/
 /*#define GREEN_MULTIPLIER 0.7*/
 /*#define BLUE_MULTIPLIER 0.9*/
-#define RED_MULTIPLIER 0.7
+#define RED_MULTIPLIER 1
 #define GREEN_MULTIPLIER 1
 #define BLUE_MULTIPLIER 1
 
@@ -17,7 +17,7 @@
 #define GREEN_THRESHOLD 0.05
 #define BLUE_THRESHOLD 0.05
 
-void set_chanel_color(enum ColorChannel c, double value) {
+void set_chanel_color(enum ColorChannel c, uint32_t value) {
   enum tim_oc_id channel = RED_OC;
   unsigned int timer_id = RED_TIM;
   double multiplier = RED_MULTIPLIER;
@@ -34,14 +34,14 @@ void set_chanel_color(enum ColorChannel c, double value) {
     multiplier = BLUE_MULTIPLIER;
     threshold = BLUE_THRESHOLD;
   }
-  if (value > 1)
-    value_to_set = 1;
-  else if (value > threshold) 
-    value_to_set = (uint32_t)(value * multiplier * PWM_MAX_VALUE);
+  if (value > PWM_MAX_VALUE)
+    value_to_set = PWM_MAX_VALUE;
+  else if (value > threshold*PWM_MAX_VALUE) 
+    value_to_set = (uint32_t)(value * multiplier);
   timer_set_oc_value(timer_id, channel, value_to_set);
 }
 
-void set_led_color(double r, double g, double b) {
+void set_led_color(uint32_t r, uint32_t g, uint32_t b) {
   set_chanel_color(RED, r);
   set_chanel_color(GREEN, g);
   set_chanel_color(BLUE, b);

@@ -2,7 +2,7 @@
 #define FREQ_ANALYSER_H
 #include "kiss_fft.h"
 
-#define FFT_SIZE 512
+#define FFT_SIZE 64
 #define SAMPLE_RATE 47619
 #define BIN_WIDTH (SAMPLE_RATE / FFT_SIZE) // ~93.01 Hz
 
@@ -15,7 +15,7 @@
 
 // Диапазоны бинов (ceil для верхних границ)
 #define START_LOW 1 // Игнорируем DC (бин 0)
-#define END_LOW BIN(LOW_FREQ_MAX)
+#define END_LOW BIN(LOW_FREQ_MAX)+1
 #define START_MID (END_LOW + 1)
 #define END_MID BIN(MID_FREQ_MAX)
 #define START_HIGH (END_MID + 1)

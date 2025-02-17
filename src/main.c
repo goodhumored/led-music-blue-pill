@@ -4,16 +4,17 @@
 #include "led-strip-controller.h"
 #include "pin-mapping.h"
 #include "pwm.h"
+#include "usart.h"
+#include "util.h"
 #include <kiss_fft.h>
-#include <libopencm3/stm32/adc.h>
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/timer.h>
-
+#include <stdint.h>
+#include <stdio.h>
 
 #define OFFSET                                                                 \
   0 // половина от 4095 (макс значение АЦП)  это если в идеале сигнал
-       // крутится вокруг 1.65v
+    // крутится вокруг 1.65v
+
+#define FFT_CONVERSION_PERIOD 64
 
 void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
   for (int i = 0; i < FFT_SIZE - 1; i++) {
@@ -22,8 +23,8 @@ void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
   buffer[FFT_SIZE - 1].r = value;
 }
 
-kiss_fft_scalar adc_to_kiss_fft_scalar(uint16_t value) {
-  return (value - OFFSET) * 16;
+kiss_fft_scalar adc_to_kiss_fft_scalar(uint32_t value) {
+  return ((int16_t)(value) - OFFSET)*16;
 }
 
 void fill_fft_buffer(kiss_fft_cpx in[FFT_SIZE]) {
@@ -41,11 +42,13 @@ int main(void) {
   kiss_fft_cfg cfg = kiss_fft_alloc(FFT_SIZE, 0, NULL, NULL);
   kiss_fft_cpx in[FFT_SIZE], out[FFT_SIZE];
 
-  uint16_t another_value;
-  int i = 0;
+  uint32_t another_value;
+  int16_t fft_value;
+  uint32_t i = 0;
 
   // Инициализация всей аппаратной части
   init_gpio();
+  usart_setup();
   init_adc();
   init_pwm();
 
@@ -56,27 +59,36 @@ int main(void) {
   blink(2, 50, 50);
 
   fill_fft_buffer(in);
+  double red = 0;
+  double green = 0;
 
+  double blue = 0;
+  uint16_t mxv = 0; 
+  uint16_t mnv = 65535;
+  uint32_t sum = 0;
   while (1) {
-    another_value = adc_to_kiss_fft_scalar(read_adc());
-    /*printf("Value = %d\n", another_value);*/
+    another_value = read_adc();
+    /*if (another_value > mxv) mxv = another_value;*/
+    /*if (another_value < mnv) mnv = another_value;*/
+    /*sum += another_value;*/
+    /*printf("min: %d; max: %d; avg: %d\r\n", mnv, mxv, sum/i);*/
+    fft_value = adc_to_kiss_fft_scalar(another_value);
     push_value(in, another_value);
-
-    kiss_fft(cfg, in, out);
-    calculate_bands(out, &bands);
-    /*blink(1, bands.low * 10, 200);*/
-    double red = bands.low/( (double)INT16_MAX/10 );
-    double green = bands.mid/( (double)INT16_MAX/10 );
-    double blue = bands.high/( (double)INT16_MAX/10 );
-    /*red = 0.5;*/
-    /*green = 0.5;*/
-    /*blue = 0.5;*/
-    if (i++ == FFT_SIZE) {
-      i = 0;
-      blink(1, 1000, 0);
+    i++;
+    if (i % FFT_CONVERSION_PERIOD == 0) {
+      kiss_fft(cfg, in, out);
+      printf("dc_offset: %d\r\n",out[0]);
+      printf("2: %d; 10: %d; 20: %d; 32: %d\r\n",out[2], out[10], out[20], out[32]);
+      calculate_bands(out, &bands);
+      red = bands.low;
+      green = bands.mid;
+      blue = bands.high;
+      wait(50);
+      set_led_color(red, green, blue);
     }
-
-    set_led_color(red, green, blue);
+    if (i % FFT_SIZE == 0) {
+      blink(1, 10, 0);
+    }
   }
 
   return 0;
