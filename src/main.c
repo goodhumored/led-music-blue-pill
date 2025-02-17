@@ -1,3 +1,4 @@
+#include "adc-to-fft.h"
 #include "adc.h"
 #include "blink.h"
 #include "frequency-analyser.h"
@@ -10,10 +11,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define OFFSET                                                                 \
-  0 // половина от 4095 (макс значение АЦП)  это если в идеале сигнал
-    // крутится вокруг 1.65v
-
 #define FFT_CONVERSION_PERIOD 64
 
 void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
@@ -21,10 +18,6 @@ void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
     buffer[i].r = buffer[i + 1].r;
   }
   buffer[FFT_SIZE - 1].r = value;
-}
-
-kiss_fft_scalar adc_to_kiss_fft_scalar(uint32_t value) {
-  return ((int16_t)(value) - OFFSET)*16;
 }
 
 void fill_fft_buffer(kiss_fft_cpx in[FFT_SIZE]) {

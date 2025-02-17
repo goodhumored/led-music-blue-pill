@@ -1,6 +1,7 @@
 # Переменные для путей
 BUILD_DIR = build
 SRC_DIR = src
+INCLUDE_DIR = include
 BINARY = ${BUILD_DIR}/main
 OBJ_DIR = ${BUILD_DIR}/obj
 # Библиотека
@@ -100,6 +101,7 @@ endef
 ifeq ($(strip $(DEVICE)),)
 # Old style, assume LDSCRIPT exists
 DEFS		+= -I$(OPENCM3_DIR)/include
+DEFS		+= -I$(INCLUDE_DIR)
 LDFLAGS		+= -L$(OPENCM3_DIR)/lib
 LDLIBS		+= -l$(LIBNAME)
 LDSCRIPT	?= $(BINARY).ld
