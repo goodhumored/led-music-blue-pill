@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #ifndef FFT_SIZE
-#define FFT_SIZE 512
+#define FFT_SIZE 256
 #endif
 #define SAMPLE_RATE 47619
 #define BIN_WIDTH (SAMPLE_RATE / FFT_SIZE) 

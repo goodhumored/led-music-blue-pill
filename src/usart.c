@@ -6,6 +6,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/usart.h>
+#include <stdio.h>
 #endif
 
 void usart_setup(void) {
@@ -18,6 +19,17 @@ void usart_setup(void) {
   usart_set_mode(USART1, USART_MODE_TX);
 
   usart_enable(USART1);
+#endif
+}
+
+void send_fft_data(int16_t *bins, uint16_t size) {
+#ifndef UNIT_TEST
+  for (uint16_t i = 1; i < size; i++) {
+    char buffer[10];
+    int len = snprintf(buffer, sizeof(buffer), "%d ", bins[i]);
+    _write(1, buffer, len);
+  }
+  _write(1, "\r\n", 2); // Новый кадр данных
 #endif
 }
 

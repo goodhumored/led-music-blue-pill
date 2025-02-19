@@ -24,11 +24,11 @@ void calculate_bands(const int16_t *bins, FrequencyBands *bands, int16_t output_
   }
 
   uint32_t max_sum = sum_low;
-  /*if (sum_mid > max_sum)*/
-  /*  max_sum = sum_mid;*/
-  /*if (sum_high > max_sum)*/
-  /*  max_sum = sum_high;*/
-  max_sum += sum_mid + sum_high;
+  if (sum_mid > max_sum)
+    max_sum = sum_mid;
+  if (sum_high > max_sum)
+    max_sum = sum_high;
+  /*max_sum += sum_mid + sum_high;*/
 
   bands->low = sum_low * output_max / max_sum;
   bands->mid = sum_mid * output_max / max_sum;

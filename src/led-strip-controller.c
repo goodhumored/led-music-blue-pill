@@ -7,9 +7,9 @@
 #include <stdint.h>
 
 // Множетили для выходного значения
-#define RED_MULTIPLIER (uint16_t)(0.7 * PWM_MAX_VALUE)
-#define GREEN_MULTIPLIER (uint16_t)(0.7 * PWM_MAX_VALUE)
-#define BLUE_MULTIPLIER (uint16_t)(0.9 * PWM_MAX_VALUE)
+#define RED_MULTIPLIER (uint16_t)(1 * PWM_MAX_VALUE)
+#define GREEN_MULTIPLIER (uint16_t)(0.4 * PWM_MAX_VALUE)
+#define BLUE_MULTIPLIER (uint16_t)(0.2 * PWM_MAX_VALUE)
 
 // минимальные значения цветов 0-1
 #define RED_THRESHOLD (uint16_t)(0.05 * PWM_MAX_VALUE)
