@@ -23,7 +23,7 @@ OPENCM3_DIR := $(wildcard $(LIBPATHS:=/locm3.sublime-project))
 OPENCM3_DIR := $(firstword $(dir $(OPENCM3_DIR)))
 
 CC = arm-none-eabi-gcc
-CFLAGS = -Wall -Wextra -O0 -DSTM32F1
+CFLAGS = -Wall -Wextra -O3 -DSTM32F1
 LDFLAGS = -Llib/libopencm3/lib -lopencm3_stm32f1
 LIBNAME		= opencm3_stm32f1
 DEFS		+= -DSTM32F1
@@ -71,7 +71,7 @@ STFLASH		= $(shell which st-flash)
 STYLECHECK	:= /checkpatch.pl
 STYLECHECKFLAGS	:= --no-tree -f --terse --mailback
 STYLECHECKFILES	:= $(shell find . -name '*.[ch]')
-OPT		:= -Os
+OPT		:= -O3
 DEBUG		:= -ggdb3
 CSTD		?= -std=c99
 
@@ -148,6 +148,7 @@ HOST_CXXFLAGS = -std=c++14 \
                 -DKISSFFT_TEST=OFF \
                 -DUNIT_TEST \
 		-DFFT_SIZE=1024
+		# -DPLOTS
 
 #   ─────────────────────────────── C flags ─────────────────────────────
 TGT_CFLAGS	+= $(OPT) $(CSTD) $(DEBUG)
@@ -216,8 +217,8 @@ erase:
 	$(STFLASH) erase
 
 clean:
-	@#printf "  CLEAN\n"
-	$(Q)$(RM) $(GENERATED_BINARIES) generated.* $(OBJS) $(OBJS:%.o=%.d)
+	$(call header, CLEAN)
+	$(Q)$(RM) -r build
 GENERATED_BINARIES=$(BINARY).elf $(BINARY).bin $(BINARY).hex $(BINARY).srec $(BINARY).list $(BINARY).map
 
 # Either verify the user provided LDSCRIPT exists, or generate it.

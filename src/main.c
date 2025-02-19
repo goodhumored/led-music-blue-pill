@@ -6,12 +6,11 @@
 #include "pin-mapping.h"
 #include "pwm.h"
 #include "usart.h"
-#include "util.h"
 #include <kiss_fft.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#define FFT_CONVERSION_PERIOD 64
+#define FFT_CONVERSION_PERIOD FFT_SIZE
 
 void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
   for (int i = 0; i < FFT_SIZE - 1; i++) {
@@ -21,13 +20,11 @@ void push_value(kiss_fft_cpx buffer[FFT_SIZE], int16_t value) {
 }
 
 void fill_fft_buffer(kiss_fft_cpx in[FFT_SIZE]) {
-  for (int i = 0; i < FFT_SIZE; i++) {
+  for (int i = 0; i < FFT_CONVERSION_PERIOD; i++) {
     in[i].r = adc_to_kiss_fft_scalar(read_adc()); // Пример для 12-bit АЦП
     in[i].i = 0;
   }
 }
-
-kiss_fft_scalar get_amplitude(kiss_fft_cpx afr) {}
 
 #ifndef UNIT_TEST
 int main(void) {
@@ -38,7 +35,6 @@ int main(void) {
 
   uint32_t another_value;
   int16_t fft_value;
-  uint32_t i = 0;
 
   // Инициализация всей аппаратной части
   init_gpio();
@@ -46,45 +42,35 @@ int main(void) {
   init_adc();
   init_pwm();
 
-  blink(3, 100, 50);
+  blink(3, 50, 25);
 
   start_conversion();
 
-  blink(2, 50, 50);
+  blink(2, 25, 10);
 
-  fill_fft_buffer(in);
-  double red = 0;
-  double green = 0;
+  int16_t red = 0;
+  int16_t green = 0;
+  int16_t blue = 0;
+  int16_t bins[FFT_SIZE];
 
-  double blue = 0;
-  uint16_t mxv = 0; 
-  uint16_t mnv = 65535;
-  uint32_t sum = 0;
   while (1) {
-    another_value = read_adc();
-    /*if (another_value > mxv) mxv = another_value;*/
-    /*if (another_value < mnv) mnv = another_value;*/
-    /*sum += another_value;*/
-    /*printf("min: %d; max: %d; avg: %d\r\n", mnv, mxv, sum/i);*/
-    fft_value = adc_to_kiss_fft_scalar(another_value);
-    push_value(in, another_value);
-    i++;
-    if (i % FFT_CONVERSION_PERIOD == 0) {
-      kiss_fft(cfg, in, out);
-      printf("dc_offset: %d\r\n",out[0]);
-      printf("2: %d; 10: %d; 20: %d; 32: %d\r\n",out[2], out[10], out[20], out[32]);
-      calculate_bands(out, &bands);
-      red = bands.low;
-      green = bands.mid;
-      blue = bands.high;
-      wait(50);
-      set_led_color(red, green, blue);
-    }
-    if (i % FFT_SIZE == 0) {
-      blink(1, 10, 0);
-    }
+    fill_fft_buffer(in);
+    blink(1, 10, 0);
+
+    kiss_fft(cfg, in, out);
+
+    calculate_bin_amps(out, bins);
+    calculate_bands(bins, &bands, PWM_MAX_VALUE);
+
+    red = bands.low;
+    green = bands.mid;
+    blue = bands.high;
+
+    printf("(%d, %d, %d)\r\n", red, green, blue);
+
+    set_led_color(red, green, blue);
   }
 
   return 0;
+}
 #endif
-

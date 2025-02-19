@@ -7,17 +7,26 @@
 #include <stdint.h>
 
 // Множетили для выходного значения
-/*#define RED_MULTIPLIER 0.7*/
-/*#define GREEN_MULTIPLIER 0.7*/
-/*#define BLUE_MULTIPLIER 0.9*/
-#define RED_MULTIPLIER 1
-#define GREEN_MULTIPLIER 1
-#define BLUE_MULTIPLIER 1
+#define RED_MULTIPLIER (uint16_t)(0.7 * PWM_MAX_VALUE)
+#define GREEN_MULTIPLIER (uint16_t)(0.7 * PWM_MAX_VALUE)
+#define BLUE_MULTIPLIER (uint16_t)(0.9 * PWM_MAX_VALUE)
 
 // минимальные значения цветов 0-1
-#define RED_THRESHOLD 0.05
-#define GREEN_THRESHOLD 0.05
-#define BLUE_THRESHOLD 0.05
+#define RED_THRESHOLD (uint16_t)(0.05 * PWM_MAX_VALUE)
+#define GREEN_THRESHOLD (uint16_t)(0.05 * PWM_MAX_VALUE)
+#define BLUE_THRESHOLD (uint16_t)(0.05 * PWM_MAX_VALUE)
+
+#ifndef UNIT_TEST
+void set_pwm_value(uint16_t value, uint16_t threshold, uint16_t multiplier,
+                   enum tim_oc_id channel, uint32_t timer_id) {
+  uint32_t value_to_set = 0;
+  if (value > PWM_MAX_VALUE)
+    value_to_set = multiplier;
+  else if (value > threshold)
+    value_to_set = value * multiplier / 1000;
+  timer_set_oc_value(timer_id, channel, value_to_set);
+}
+#endif
 
 void set_chanel_color(enum ColorChannel c, uint32_t value) {
 #ifndef UNIT_TEST
@@ -25,7 +34,6 @@ void set_chanel_color(enum ColorChannel c, uint32_t value) {
   unsigned int timer_id = RED_TIM;
   double multiplier = RED_MULTIPLIER;
   double threshold = RED_THRESHOLD;
-  uint32_t value_to_set = 0;
   if (c == GREEN) {
     timer_id = GREEN_TIM;
     channel = GREEN_OC;
@@ -37,11 +45,7 @@ void set_chanel_color(enum ColorChannel c, uint32_t value) {
     multiplier = BLUE_MULTIPLIER;
     threshold = BLUE_THRESHOLD;
   }
-  if (value > PWM_MAX_VALUE)
-    value_to_set = PWM_MAX_VALUE;
-  else if (value > threshold * PWM_MAX_VALUE)
-    value_to_set = (uint32_t)(value * multiplier);
-  timer_set_oc_value(timer_id, channel, value_to_set);
+  set_pwm_value(value, threshold, multiplier, channel, timer_id);
 #endif
 }
 

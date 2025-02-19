@@ -1,9 +1,10 @@
 #ifndef FREQ_ANALYSER_H
 #define FREQ_ANALYSER_H
 #include "kiss_fft.h"
+#include <stdint.h>
 
 #ifndef FFT_SIZE
-#define FFT_SIZE 64
+#define FFT_SIZE 512
 #endif
 #define SAMPLE_RATE 47619
 #define BIN_WIDTH (SAMPLE_RATE / FFT_SIZE) 
@@ -24,10 +25,12 @@
 #define END_HIGH (FFT_SIZE / 2) // Теорема Найквиста (23.8 кГц)
 
 typedef struct {
-    float low;
-    float mid;
-    float high;
+    uint16_t low;
+    uint16_t mid;
+    uint16_t high;
 } FrequencyBands;
 
-void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands);
+void calculate_bands(const int16_t *bins, FrequencyBands* bands, int16_t output_max);
+int16_t bin_value(kiss_fft_cpx *buffer, int bin);
+void calculate_bin_amps(kiss_fft_cpx *buffer, int16_t *bins);
 #endif

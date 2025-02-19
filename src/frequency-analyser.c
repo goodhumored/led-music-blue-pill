@@ -1,34 +1,36 @@
 #include "frequency-analyser.h"
+#include <stdint.h>
 
-void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands) {
-    uint32_t sum_low = 0, sum_mid = 0, sum_high = 0;
+void calculate_bin_amps(kiss_fft_cpx *buffer, int16_t *bins) {
+  for(int i = 1; i < FFT_SIZE/2; i++) {
+    bins[i] = bin_value(buffer, i);
+  }
+}
 
-    printf("%d-%d; %d-%d; %d-%d\n", START_LOW, END_LOW, START_MID, END_MID, START_HIGH, END_HIGH);
-    // Низкие частоты
-    for(uint16_t i = START_LOW; i <= END_LOW; i++) {
-        int32_t re = fft_output[i].r;
-        int32_t im = fft_output[i].i;
-        sum_low += (uint32_t)sqrtf(re*re + im*im);
-    }
+inline int16_t bin_value(kiss_fft_cpx *buffer, int bin) {
+  return (int16_t)sqrt(buffer[bin].r * buffer[bin].r + buffer[bin].i * buffer[bin].i);
+}
 
-    // Средние частоты
-    for(uint16_t i = START_MID; i <= END_MID; i++) {
-        int32_t re = fft_output[i].r;
-        int32_t im = fft_output[i].i;
-        sum_mid += (uint32_t)sqrtf(re*re + im*im);
-    }
+void calculate_bands(const int16_t *bins, FrequencyBands *bands, int16_t output_max) {
+  uint32_t sum_low = 0, sum_mid = 0, sum_high = 0;
+  for (uint16_t i = START_LOW; i <= END_LOW; i++) {
+    sum_low += bins[i];
+  }
+  for (uint16_t i = START_MID; i <= END_MID; i++) {
+    sum_mid += bins[i];
+  }
+  for (uint16_t i = START_HIGH; i <= END_HIGH; i++) {
+    sum_high += bins[i];
+  }
 
-    // Высокие частоты
-    for(uint16_t i = START_HIGH; i <= END_HIGH; i++) {
-        int32_t re = fft_output[i].r;
-        int32_t im = fft_output[i].i;
-        sum_high += (uint32_t)sqrtf(re*re + im*im);
-    }
+  uint32_t max_sum = sum_low;
+  /*if (sum_mid > max_sum)*/
+  /*  max_sum = sum_mid;*/
+  /*if (sum_high > max_sum)*/
+  /*  max_sum = sum_high;*/
+  max_sum += sum_mid + sum_high;
 
-    uint32_t sum = sum_low + sum_mid + sum_high;
-    printf("sl: %d, sm: %d, sh: %d; sum: %d\n", sum_low, sum_mid, sum_high, sum);
-    // Усреднение с приведением к int16_t
-    bands->low  = (float)sum_low/sum;
-    bands->mid  = (float)sum_mid/sum;
-    bands->high = (float)sum_high/sum;
+  bands->low = sum_low * output_max / max_sum;
+  bands->mid = sum_mid * output_max / max_sum;
+  bands->high = sum_high * output_max / max_sum;
 }

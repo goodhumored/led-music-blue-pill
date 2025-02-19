@@ -1,5 +1,4 @@
 #include "kiss_fft.h"
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -205,7 +204,6 @@ TEST_F(FrequencyAnalisys, FIVE_FREQS) {
   int expected_bin3 = ceil(freq3 / BIN_WIDTH);
   int expected_bin4 = ceil(freq4 / BIN_WIDTH);
   int expected_bin5 = ceil(freq5 / BIN_WIDTH);
-  printf("freq: %d; BIN_WIDTH: %d", freq3, BIN_WIDTH);
   int bins_sorted[FFT_SIZE / 2];
   int peaks_count = 0;
   get_peak_bins_sorted_by_amplitude(out, bins_sorted, peaks_count);
@@ -222,10 +220,10 @@ TEST_F(FrequencyAnalisys, BANDS__HIGH_FREQ__HIGH_AMP) {
   add_sinewave(in, freq, 1 * INT16_MAX);
   kiss_fft(cfg, in, out);
 
-  calculate_bands(out, &bands);
-  EXPECT_LT(bands.low, 0.1);
-  EXPECT_LT(bands.mid, 0.1);
-  EXPECT_GT(bands.high, 0.9);
+  calculate_bands(out, &bands, 1000);
+  EXPECT_LT(bands.low, 100);
+  EXPECT_LT(bands.mid, 100);
+  EXPECT_GT(bands.high, 900);
 }
 
 TEST_F(FrequencyAnalisys, BANDS__MID_FREQ__LOW_AMP) {
@@ -234,10 +232,10 @@ TEST_F(FrequencyAnalisys, BANDS__MID_FREQ__LOW_AMP) {
   add_sinewave(in, freq, 0.1 * INT16_MAX);
   kiss_fft(cfg, in, out);
 
-  calculate_bands(out, &bands);
-  EXPECT_LT(bands.low, 0.1);
-  EXPECT_GT(bands.mid, 0.9);
-  EXPECT_LT(bands.high, 0.1);
+  calculate_bands(out, &bands, 1000);
+  EXPECT_LT(bands.low, 1000 * 0.1);
+  EXPECT_GT(bands.mid, 1000 * 0.9);
+  EXPECT_LT(bands.high, 1000 * 0.1);
 }
 
 TEST_F(FrequencyAnalisys, BANDS__LOW_FREQ__HIGH_AMP) {
@@ -246,10 +244,10 @@ TEST_F(FrequencyAnalisys, BANDS__LOW_FREQ__HIGH_AMP) {
   add_sinewave(in, freq, 1 * INT16_MAX);
   kiss_fft(cfg, in, out);
 
-  calculate_bands(out, &bands);
-  EXPECT_GT(bands.low, 0.6);
-  EXPECT_LT(bands.mid, 0.3);
-  EXPECT_LT(bands.high, 0.1);
+  calculate_bands(out, &bands, 1000);
+  EXPECT_EQ(bands.low, 1000);
+  EXPECT_LT(bands.mid, 1000 * 0.5);
+  EXPECT_LT(bands.high, 1000 * 0.2);
 }
 
 TEST_F(FrequencyAnalisys, BANDS__LOW_HIGH_FREQ__HIGH_AMP) {
@@ -260,10 +258,10 @@ TEST_F(FrequencyAnalisys, BANDS__LOW_HIGH_FREQ__HIGH_AMP) {
   add_sinewave(in, freq2, 0.5 * INT16_MAX);
   kiss_fft(cfg, in, out);
 
-  calculate_bands(out, &bands);
-  EXPECT_GT(bands.low, 0.45);
-  EXPECT_LT(bands.mid, 0.2);
-  EXPECT_GT(bands.high, 0.3);
+  calculate_bands(out, &bands, 1000);
+  EXPECT_EQ(bands.low, 1000);
+  EXPECT_LT(bands.mid, 1000 * 0.5);
+  EXPECT_GT(bands.high, 1000 * 0.7);
 }
 
 TEST_F(FrequencyAnalisys, BANDS__LOW_MID_FREQ__LOW_AMP) {
@@ -274,10 +272,10 @@ TEST_F(FrequencyAnalisys, BANDS__LOW_MID_FREQ__LOW_AMP) {
   add_sinewave(in, freq2, 0.05 * INT16_MAX);
   kiss_fft(cfg, in, out);
 
-  calculate_bands(out, &bands);
-  EXPECT_GT(bands.low, 0.45);
-  EXPECT_GT(bands.mid, 0.4);
-  EXPECT_LT(bands.high, 0.1);
+  calculate_bands(out, &bands, 1000);
+  EXPECT_EQ(bands.low, 1000);
+  EXPECT_GT(bands.mid, 1000 * 0.8);
+  EXPECT_LT(bands.high, 1000 * 0.2);
 }
 
 int main(int argc, char **argv) {
