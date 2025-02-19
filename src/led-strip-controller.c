@@ -1,7 +1,9 @@
 #include "led-strip-controller.h"
 #include "pin-mapping.h"
 #include "pwm.h"
+#ifndef UNIT_TEST
 #include <libopencm3/stm32/timer.h>
+#endif
 #include <stdint.h>
 
 // Множетили для выходного значения
@@ -18,6 +20,7 @@
 #define BLUE_THRESHOLD 0.05
 
 void set_chanel_color(enum ColorChannel c, uint32_t value) {
+#ifndef UNIT_TEST
   enum tim_oc_id channel = RED_OC;
   unsigned int timer_id = RED_TIM;
   double multiplier = RED_MULTIPLIER;
@@ -36,9 +39,10 @@ void set_chanel_color(enum ColorChannel c, uint32_t value) {
   }
   if (value > PWM_MAX_VALUE)
     value_to_set = PWM_MAX_VALUE;
-  else if (value > threshold*PWM_MAX_VALUE) 
+  else if (value > threshold * PWM_MAX_VALUE)
     value_to_set = (uint32_t)(value * multiplier);
   timer_set_oc_value(timer_id, channel, value_to_set);
+#endif
 }
 
 void set_led_color(uint32_t r, uint32_t g, uint32_t b) {

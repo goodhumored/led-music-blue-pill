@@ -1,9 +1,12 @@
 #include "pwm.h"
+#ifndef UNIT_TEST
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/timer.h>
+#endif
 #include "pin-mapping.h"
 
 void init_pwm(void) {
+#ifndef UNIT_TEST
   rcc_periph_clock_enable(RCC_TIM4);
 
   timer_set_prescaler(RED_TIM, 72);         // Делитель для получения частоты
@@ -20,4 +23,5 @@ void init_pwm(void) {
 
   timer_enable_preload(RED_TIM);
   timer_enable_counter(RED_TIM);
+  #endif
 }

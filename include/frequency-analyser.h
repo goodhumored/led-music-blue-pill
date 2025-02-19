@@ -2,9 +2,11 @@
 #define FREQ_ANALYSER_H
 #include "kiss_fft.h"
 
+#ifndef FFT_SIZE
 #define FFT_SIZE 64
+#endif
 #define SAMPLE_RATE 47619
-#define BIN_WIDTH (SAMPLE_RATE / FFT_SIZE) // ~93.01 Hz
+#define BIN_WIDTH (SAMPLE_RATE / FFT_SIZE) 
 
 // Границы частот (настройте под свою задачу)
 #define LOW_FREQ_MAX 300  // Верхняя граница низких частот (Гц)
@@ -22,9 +24,9 @@
 #define END_HIGH (FFT_SIZE / 2) // Теорема Найквиста (23.8 кГц)
 
 typedef struct {
-    int16_t low;
-    int16_t mid;
-    int16_t high;
+    float low;
+    float mid;
+    float high;
 } FrequencyBands;
 
 void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands);

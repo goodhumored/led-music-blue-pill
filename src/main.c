@@ -29,6 +29,7 @@ void fill_fft_buffer(kiss_fft_cpx in[FFT_SIZE]) {
 
 kiss_fft_scalar get_amplitude(kiss_fft_cpx afr) {}
 
+#ifndef UNIT_TEST
 int main(void) {
   FrequencyBands bands;
   // инициализация fft
@@ -85,4 +86,5 @@ int main(void) {
   }
 
   return 0;
-}
+#endif
+

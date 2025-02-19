@@ -2,14 +2,13 @@
 
 void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands) {
     uint32_t sum_low = 0, sum_mid = 0, sum_high = 0;
-    uint16_t count_low = 0, count_mid = 0, count_high = 0;
 
+    printf("%d-%d; %d-%d; %d-%d\n", START_LOW, END_LOW, START_MID, END_MID, START_HIGH, END_HIGH);
     // Низкие частоты
     for(uint16_t i = START_LOW; i <= END_LOW; i++) {
         int32_t re = fft_output[i].r;
         int32_t im = fft_output[i].i;
         sum_low += (uint32_t)sqrtf(re*re + im*im);
-        count_low++;
     }
 
     // Средние частоты
@@ -17,7 +16,6 @@ void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands) {
         int32_t re = fft_output[i].r;
         int32_t im = fft_output[i].i;
         sum_mid += (uint32_t)sqrtf(re*re + im*im);
-        count_mid++;
     }
 
     // Высокие частоты
@@ -25,11 +23,12 @@ void calculate_bands(const kiss_fft_cpx* fft_output, FrequencyBands* bands) {
         int32_t re = fft_output[i].r;
         int32_t im = fft_output[i].i;
         sum_high += (uint32_t)sqrtf(re*re + im*im);
-        count_high++;
     }
 
+    uint32_t sum = sum_low + sum_mid + sum_high;
+    printf("sl: %d, sm: %d, sh: %d; sum: %d\n", sum_low, sum_mid, sum_high, sum);
     // Усреднение с приведением к int16_t
-    bands->low  = (count_low)  ? (int16_t)(sum_low / count_low)  : 0;
-    bands->mid  = (count_mid)  ? (int16_t)(sum_mid / count_mid)  : 0;
-    bands->high = (count_high) ? (int16_t)(sum_high / count_high) : 0;
+    bands->low  = (float)sum_low/sum;
+    bands->mid  = (float)sum_mid/sum;
+    bands->high = (float)sum_high/sum;
 }

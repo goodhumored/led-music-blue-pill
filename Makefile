@@ -1,11 +1,23 @@
-# Переменные для путей
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                   Переменные для путей                   │
+#          ╰──────────────────────────────────────────────────────────╯
 BUILD_DIR = build
 SRC_DIR = src
 INCLUDE_DIR = include
 BINARY = ${BUILD_DIR}/main
 OBJ_DIR = ${BUILD_DIR}/obj
-# Библиотека
-LIBPATHS := ./lib/libopencm3
+LIBS_DIR = lib
+
+TARGET_OBJ_DIR  = $(BUILD_DIR)/target-obj
+HOST_OBJ_DIR    = $(BUILD_DIR)/host-obj
+
+#   ────────────────────────────── Библиотеки ──────────────────────────────
+LIBPATHS := ${LIBS_DIR}/libopencm3
+
+#   ──────────────────────────────── тесты ──────────────────────────────
+TEST_DIR       = tests
+TEST_FILES := $(wildcard $(TEST_DIR)/*.cpp)
+TEST_BINS  := $(patsubst $(TEST_DIR)/%.cpp, $(BUILD_DIR)/tests/%, $(TEST_FILES))
 
 OPENCM3_DIR := $(wildcard $(LIBPATHS:=/locm3.sublime-project))
 OPENCM3_DIR := $(firstword $(dir $(OPENCM3_DIR)))
@@ -32,8 +44,6 @@ OOCD_TARGET	?= stm32f1x
 # Set the BMP_PORT to a serial port and then BMP is used for flashing
 BMP_PORT	?=
 
-# Путь к исходным файлам
-SRC = $(SRC_DIR)/main.c
 
 # Имя исполнимого файла
 TARGET = $(BUILD_DIR)/main
@@ -49,12 +59,13 @@ endif
 
 PREFIX		?= arm-none-eabi-
 
+HOST_CXX        := g++
+HOST_CC         := gcc
 CC		:= $(PREFIX)gcc
 CXX		:= $(PREFIX)g++
 LD		:= $(PREFIX)gcc
 AS		:= $(PREFIX)as
 OBJCOPY		:= $(PREFIX)objcopy
-OBJDUMP		:= $(PREFIX)objdump
 GDB		:= $(PREFIX)gdb
 STFLASH		= $(shell which st-flash)
 STYLECHECK	:= /checkpatch.pl
@@ -71,11 +82,15 @@ define header
 	@echo ""
 endef
 
-###############################################################################
-# Source files
-
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                       Source files                       │
+#          ╰──────────────────────────────────────────────────────────╯
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+#   ───────────────────────────────── objs ─────────────────────────────────
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
+#   ────────────────────────────── obj tests ────────────────────────────
+HOST_OBJS       = $(patsubst $(SRC_DIR)/%.c, $(HOST_OBJ_DIR)/%.o, $(SRC_FILES))
+KISSFFT_OBJ     = $(patsubst $(KISSFFT_DIR)/%.c, $(HOST_OBJ_DIR)/kissfft/%.o, $(KISSFFT_SRC))
 
 
 ifeq ($(strip $(OPENCM3_DIR)),)
@@ -116,9 +131,25 @@ endif
 OPENCM3_SCRIPT_DIR = $(OPENCM3_DIR)/scripts
 EXAMPLES_SCRIPT_DIR	= $(OPENCM3_DIR)/../scripts
 
-###############################################################################
-# C flags
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                            flags                         │
+#          ╰──────────────────────────────────────────────────────────╯
+#   ──────────────────────────────── embed ──────────────────────────────
+LDLIBS		+= -Wl,--start-group -lc -lgcc -lnosys -lm -Wl,--end-group
 
+#   ──────────────────────────────── tests ──────────────────────────────
+GTEST_LDFLAGS = -lgtest -lgtest_main -lpthread
+
+HOST_CXXFLAGS = -std=c++14 \
+                -I$(INCLUDE_DIR) \
+                -I$(KISSFFT_DIR) \
+                -DFIXED_POINT=16 \
+                -DKISSFFT_DATATYPE=int16_t \
+                -DKISSFFT_TEST=OFF \
+                -DUNIT_TEST \
+		-DFFT_SIZE=1024
+
+#   ─────────────────────────────── C flags ─────────────────────────────
 TGT_CFLAGS	+= $(OPT) $(CSTD) $(DEBUG)
 TGT_CFLAGS	+= $(ARCH_FLAGS)
 TGT_CFLAGS	+= -Wextra -Wshadow -Wimplicit-function-declaration
@@ -127,24 +158,18 @@ TGT_CFLAGS	+= -fno-common -ffunction-sections -fdata-sections
 DEP_DIR := $(OBJ_DIR)/dep
 TGT_CFLAGS += -MMD -MP -MF $(DEP_DIR)/$(@F:.o=.d)
 
-###############################################################################
-# C++ flags
-
+#   ────────────────────────────── C++ flags ────────────────────────────
 TGT_CXXFLAGS	+= $(OPT) $(CXXSTD) $(DEBUG)
 TGT_CXXFLAGS	+= $(ARCH_FLAGS)
 TGT_CXXFLAGS	+= -Wextra -Wshadow -Wredundant-decls  -Weffc++
 TGT_CXXFLAGS	+= -fno-common -ffunction-sections -fdata-sections
 
-###############################################################################
-# C & C++ preprocessor common flags
-
+#   ────────────────── C & C++ preprocessor common flags ────────────────
 TGT_CPPFLAGS	+= -MD
 TGT_CPPFLAGS	+= -Wall -Wundef
 TGT_CPPFLAGS	+= $(DEFS)
 
-###############################################################################
-# Linker flags
-
+#   ───────────────────────────── Linker flags ─────────────────────────────
 TGT_LDFLAGS		+= --static -nostartfiles
 TGT_LDFLAGS		+= -T$(LDSCRIPT)
 TGT_LDFLAGS		+= $(ARCH_FLAGS) $(DEBUG)
@@ -157,7 +182,6 @@ endif
 #          ╭──────────────────────────────────────────────────────────╮
 #          │                         kissfft                          │
 #          ╰──────────────────────────────────────────────────────────╯
-
 KISSFFT_DIR = lib/kissfft
 TGT_CPPFLAGS += -I$(KISSFFT_DIR)
 KISSFFT_SRC := $(KISSFFT_DIR)/kiss_fft.c $(KISSFFT_DIR)/kiss_fftr.c
@@ -170,15 +194,9 @@ DEFS += -DFIXED_POINT=16
 DEFS += -DKISSFFT_DATATYPE=int16_t
 DEFS += -DKISSFFT_TEST=OFF
 
-###############################################################################
-# Used libraries
-
-LDLIBS		+= -Wl,--start-group -lc -lgcc -lnosys -lm -Wl,--end-group
-
-###############################################################################
-###############################################################################
-###############################################################################
-
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                         targets                          │
+#          ╰──────────────────────────────────────────────────────────╯
 .SUFFIXES: .elf .bin .hex .srec .list .map .image-static
 .SECONDEXPANSION:
 .SECONDARY:
@@ -212,6 +230,7 @@ else
 include $(OPENCM3_DIR)/mk/genlink-rules.mk
 endif
 
+#   ──────────────────────────────── OPENCM ────────────────────────────────
 $(OPENCM3_DIR)/lib/lib$(LIBNAME).a:
 ifeq (,$(wildcard $@))
 	$(warning $(LIBNAME).a not found, attempting to rebuild in $(OPENCM3_DIR))
@@ -222,13 +241,6 @@ $(OBJ_DIR)/%.o: $(KISSFFT_DIR)/%.c
 	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
 
 
-# Define a helper macro for debugging make errors online
-# you can type "make print-OPENCM3_DIR" and it will show you
-# how that ended up being resolved by all of the included
-# makefiles.
-print-%:
-	@echo $*=$($*)
-
 ${BUILD_DIR}/%.bin: ${BUILD_DIR}/%.elf
 	@#printf "  OBJCOPY $(*).bin\n"
 	$(Q)$(OBJCOPY) -Obinary ${BUILD_DIR}/$(*).elf ${BUILD_DIR}/$(*).bin
@@ -237,9 +249,14 @@ ${BUILD_DIR}/%.elf: $(OBJS) $(LDSCRIPT) $(OPENCM3_DIR)/lib/lib$(LIBNAME).a
 	@#printf "  LD      $(*).elf\n"
 	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o ${BUILD_DIR}/$(*).elf
 
+#   ─────────────────────────── объектные файлы ─────────────────────────
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@  -c $<
 
+
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                         стайлчек                         │
+#          ╰──────────────────────────────────────────────────────────╯
 stylecheck: $(STYLECHECKFILES:=.stylecheck)
 styleclean: $(STYLECHECKFILES:=.styleclean)
 
@@ -255,6 +272,9 @@ styleclean: $(STYLECHECKFILES:=.styleclean)
 %.styleclean:
 	$(Q)rm -f $*.stylecheck;
 
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                          flash                           │
+#          ╰──────────────────────────────────────────────────────────╯
 %.stlink-flash: %.bin
 	$(call header, FLASH)
 	$(STFLASH) write $(*).bin 0x8000000
@@ -285,6 +305,42 @@ else
 		   $(*).elf
 endif
 
-.PHONY: images clean stylecheck styleclean elf bin hex srec list ${BUILD_DIR}
+#          ╭──────────────────────────────────────────────────────────╮
+#          │                          тесты                           │
+#          ╰──────────────────────────────────────────────────────────╯
+#   ────────────────────────────── объектники ──────────────────────────────
+$(HOST_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(HOST_CC) $(HOST_CXXFLAGS) -c $< -o $@
+
+$(HOST_OBJ_DIR)/kissfft/%.o: $(KISSFFT_DIR)/%.c
+	@mkdir -p $(@D)
+	$(HOST_CXX) $(HOST_CXXFLAGS) -c $< -o $@
+
+
+$(TARGET_OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(TARGET_CC) $(TARGET_CFLAGS) -c $< -o $@
+
+test: ${BUILD_DIR} $(TEST_BINS)
+	@echo "Запуск всех тестов:"
+	@for test_bin in $(TEST_BINS); do \
+		echo "▶ $$test_bin"; \
+		$$test_bin || exit 1; \
+	done
+
+$(BUILD_DIR)/tests/%: $(TEST_DIR)/%.cpp $(HOST_OBJS) $(KISSFFT_OBJ)
+	@mkdir -p $(@D)
+	$(HOST_CXX) $(HOST_CXXFLAGS) \
+		$< \
+		$(HOST_OBJS) \
+		-o $@ \
+		$(GTEST_LDFLAGS)
+
+test-watch:
+	find tests src include -name "*.cpp" -o -name "*.c" -o -name "*.h" | entr -c make test
+
+
+.PHONY: images clean stylecheck styleclean elf bin hex srec list ${BUILD_DIR} test $(TEST_BINARY)
 
 -include $(OBJS:.o=.d)
